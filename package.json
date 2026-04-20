@@ -2,6 +2,7 @@
   "name": "visen-main1",
   "private": true,
   "scripts": {
+    "dev": "npx serve .",
     "build": "node scripts/generate-env.js && echo \"ready\""
   },
   "devDependencies": {

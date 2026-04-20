@@ -4,7 +4,6 @@ const statusEl = document.getElementById('status');
 const submitBtnEl = formEl ? formEl.querySelector('button[type="submit"]') : null;
 
 if (!formEl || !statusEl) {
-  // This script can be included on pages without the contact form.
   console.warn('Contact form elements were not found on this page.');
 } else {
   let EMAILJS_PUBLIC_KEY = window.EMAILJS_PUBLIC_KEY || '';
@@ -15,89 +14,76 @@ if (!formEl || !statusEl) {
   const hasEmailjsConfig = Boolean(
     EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID
   );
-  const hasConfiguredRecipient = Boolean(EMAILJS_TO_EMAIL && EMAILJS_TO_EMAIL.includes('@'));
 
   if (!hasEmailjsConfig) {
-    console.error(
-      'Missing EmailJS configuration. Generate env.js by setting EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, and EMAILJS_TEMPLATE_ID, then run: npm run build'
-    );
-    statusEl.innerText = 'Email service configuration is missing. Set EmailJS env vars and run npm run build.';
-    if (submitBtnEl) {
-      submitBtnEl.disabled = true;
-      submitBtnEl.title = 'Email service is not configured';
-    }
+    console.error('Missing EmailJS configuration.');
+    statusEl.innerText = 'Service not configured. Check your env.js file.';
+    if (submitBtnEl) submitBtnEl.disabled = true;
   } else {
     emailjs.init(EMAILJS_PUBLIC_KEY);
-  }
-
-  // If template uses {{to_email}}, provide it from config as a hidden field.
-  if (EMAILJS_TO_EMAIL) {
-    let toEmailInput = formEl.querySelector('input[name="to_email"]');
-    if (!toEmailInput) {
-      toEmailInput = document.createElement('input');
-      toEmailInput.type = 'hidden';
-      toEmailInput.name = 'to_email';
-      formEl.appendChild(toEmailInput);
-    }
-    toEmailInput.value = EMAILJS_TO_EMAIL;
-  }
-
-  if (EMAILJS_TO_EMAIL && !hasConfiguredRecipient) {
-    console.warn('EMAILJS_TO_EMAIL is set but is not a valid email address.');
+    console.log("EmailJS initialized with Public Key:", EMAILJS_PUBLIC_KEY);
   }
 
   formEl.addEventListener('submit', function (e) {
     e.preventDefault();
 
-    if (!hasEmailjsConfig) {
-      statusEl.innerText = 'Email service configuration is missing. Set EmailJS env vars and run npm run build.';
-      return;
-    }
+    if (!hasEmailjsConfig) return;
 
-    if (submitBtnEl) {
-      submitBtnEl.disabled = true;
-    }
+    if (submitBtnEl) submitBtnEl.disabled = true;
     statusEl.innerText = 'Sending...';
+    statusEl.style.color = '#fff';
 
     const formData = new FormData(formEl);
-    const userName = (formData.get('user_name') || '').toString();
-    const userEmail = (formData.get('user_email') || '').toString();
-    const message = (formData.get('message') || '').toString();
+    const userName = formData.get('user_name');
+    const userEmail = formData.get('user_email');
+    const userMessage = formData.get('message');
 
-    // Include common aliases because EmailJS templates often use different variable names.
     const templateParams = {
+      // Name aliases
       user_name: userName,
-      user_email: userEmail,
-      message,
-      name: userName,
-      email: userEmail,
       from_name: userName,
+      name: userName,
+      sender_name: userName,
+
+      // Email aliases
+      user_email: userEmail,
       from_email: userEmail,
+      email: userEmail,
+      sender_email: userEmail,
       reply_to: userEmail,
-      user_message: message,
-      to_email: EMAILJS_TO_EMAIL || '',
-      to: EMAILJS_TO_EMAIL || '',
-      recipient_email: EMAILJS_TO_EMAIL || ''
+
+      // Message aliases
+      message: userMessage,
+      user_message: userMessage,
+      comments: userMessage,
+
+      // Recipient aliases (FORCING support@visen.in)
+      to_email: EMAILJS_TO_EMAIL || 'support@visen.in',
+      to: EMAILJS_TO_EMAIL || 'support@visen.in',
+      recipient: EMAILJS_TO_EMAIL || 'support@visen.in',
+      destination: EMAILJS_TO_EMAIL || 'support@visen.in',
+      send_to: EMAILJS_TO_EMAIL || 'support@visen.in',
+      recipient_email: EMAILJS_TO_EMAIL || 'support@visen.in'
     };
+
+    console.log("Submitting with params:", templateParams);
 
     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams).then(
       () => {
         statusEl.innerText = 'Message sent successfully!';
+        statusEl.style.color = '#4CAF50';
         formEl.reset();
-        if (submitBtnEl) {
-          submitBtnEl.disabled = false;
-        }
+        if (submitBtnEl) submitBtnEl.disabled = false;
       },
       (err) => {
-        const errText = err && err.text ? err.text : '';
-        if (errText.toLowerCase().includes('recipients address is empty')) {
-          statusEl.innerText = 'Failed to send message. Recipient is empty. In EmailJS template set To Email to a fixed email or {{to_email}}, and ensure EMAILJS_TO_EMAIL is a valid email.';
-        } else {
-          const detail = errText ? ` (${errText})` : '';
-          statusEl.innerText = `Failed to send message.${detail}`;
-        }
-        if (submitBtnEl) {
-          submitBtnEl.disabled = false;
+        console.error('EmailJS Error:', err);
+        const errorDetail = err && err.text ? err.text : JSON.stringify(err);
+        statusEl.innerText = `Error: ${errorDetail}`;
+        statusEl.style.color = '#ff4d4d';
+        if (submitBtnEl) submitBtnEl.disabled = false;
+        
+        if (errorDetail.includes("Unauthorized") || errorDetail.includes("public key")) {
+          statusEl.innerText += " (Check your Public Key in EmailJS Dashboard)";
         }
       }
     );
