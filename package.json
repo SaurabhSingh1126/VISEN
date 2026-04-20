@@ -1,0 +1,7 @@
+{
+  "name": "visen",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/generate-env.js && echo \"ready\""
+  }
+}
