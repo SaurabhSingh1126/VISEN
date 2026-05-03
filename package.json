@@ -2,10 +2,14 @@
   "name": "visen-main1",
   "private": true,
   "scripts": {
-    "dev": "npx serve .",
+    "dev": "node server.js",
     "build": "node scripts/generate-env.js && echo \"ready\""
   },
   "devDependencies": {
     "dotenv": "^16.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
   }
 }

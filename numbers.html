@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choose a Number | VISEN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .numbers-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 15px;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .number-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      backdrop-filter: blur(10px);
+    }
+    .number-card.available:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .number-card.soldout {
+      background: rgba(255, 50, 50, 0.2);
+      border-color: rgba(255, 50, 50, 0.4);
+      color: rgba(255, 255, 255, 0.4);
+      cursor: not-allowed;
+    }
+    .status-text {
+      font-size: 0.8rem;
+      font-weight: 400;
+      margin-top: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .page-title {
+      text-align: center;
+      color: white;
+      margin-top: 50px;
+      font-size: 2.5rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="home" style="min-height: 100vh; background-image: url('bg.png'); background-size: cover; background-attachment: fixed; margin: 0; font-family: 'Outfit', sans-serif;">
+  
+  <h1 class="page-title">Select Your Number</h1>
+  <div id="status-message" style="text-align: center; color: #fff; margin-bottom: 20px; min-height: 24px; font-weight: 300;"></div>
+  
+  <div class="numbers-container" id="numbers-grid">
+    <!-- Numbers will be populated here via JavaScript -->
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="env.js"></script>
+  <script>
+    async function loadNumbers() {
+      try {
+        const response = await fetch('/api/numbers');
+        const numbers = await response.json();
+        
+        const grid = document.getElementById('numbers-grid');
+        grid.innerHTML = '';
+        
+        numbers.forEach(item => {
+          const card = document.createElement('div');
+          card.className = `number-card ${item.status}`;
+          
+          const numSpan = document.createElement('div');
+          numSpan.style.fontSize = '1.8rem';
+          numSpan.innerText = item.number;
+          
+          const statusSpan = document.createElement('div');
+          statusSpan.className = 'status-text';
+          statusSpan.innerText = item.status === 'soldout' ? 'Sold Out' : 'Available';
+          
+          card.appendChild(numSpan);
+          card.appendChild(statusSpan);
+          
+          if (item.status === 'available') {
+            card.onclick = () => bookNumber(item.number);
+          }
+          
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error loading numbers:', err);
+        document.getElementById('status-message').innerText = 'Failed to load numbers. Make sure the server is running.';
+        document.getElementById('status-message').style.color = '#ff4d4d';
+      }
+    }
+
+    async function bookNumber(num) {
+      const confirmed = confirm(`Are you sure you want to select number ${num}?`);
+      if (!confirmed) return;
+
+      const msgEl = document.getElementById('status-message');
+      msgEl.innerText = 'Sending your details securely...';
+      msgEl.style.color = '#fff';
+
+      const userName = localStorage.getItem('visen_user_name') || 'Guest';
+      const userEmail = localStorage.getItem('visen_user_email');
+      const userPhone = localStorage.getItem('visen_user_phone') || '';
+      const userInsta = localStorage.getItem('visen_user_insta') || '';
+      const userMessage = localStorage.getItem('visen_user_message') || 'No message';
+
+      if (!userEmail) {
+        msgEl.innerText = 'Error: Contact details missing. Please fill the form first.';
+        msgEl.style.color = '#ff4d4d';
+        setTimeout(() => { window.location.href = 'contact.html'; }, 2500);
+        return;
+      }
+
+      emailjs.init(window.EMAILJS_PUBLIC_KEY || '');
+      const upiId = window.UPI_ID || "your_upi_id@bank";
+
+      const combinedMessage = userMessage + 
+                              "\n\n[Phone: " + (userPhone ? userPhone : "Not provided") + "]" + 
+                              "\n[Instagram: " + (userInsta ? userInsta : "Not provided") + "]" + 
+                              "\n[Chosen Number: " + num + "]" +
+                              "\n[Payment Method: Direct UPI (" + upiId + ")]";
+
+      const templateParams = {
+        user_name: userName,
+        from_name: userName,
+        name: userName,
+        sender_name: userName,
+        user_email: userEmail,
+        from_email: userEmail,
+        email: userEmail,
+        sender_email: userEmail,
+        reply_to: userEmail,
+        message: combinedMessage,
+        user_message: userMessage,
+        comments: userMessage,
+        to_email: window.EMAILJS_TO_EMAIL || 'support@visen.in',
+        to: window.EMAILJS_TO_EMAIL || 'support@visen.in',
+        recipient: window.EMAILJS_TO_EMAIL || 'support@visen.in',
+        destination: window.EMAILJS_TO_EMAIL || 'support@visen.in',
+        send_to: window.EMAILJS_TO_EMAIL || 'support@visen.in',
+        recipient_email: window.EMAILJS_TO_EMAIL || 'support@visen.in'
+      };
+
+      try {
+        await emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_TEMPLATE_ID, templateParams);
+        
+        // Save the chosen number to finalize later after payment
+        localStorage.setItem('visen_selected_number', num);
+
+        // Redirect to payment
+        window.location.href = "payment.html";
+      } catch(err) {
+        console.error('EmailJS Error:', err);
+        msgEl.innerText = 'Failed to send message. Please try again.';
+        msgEl.style.color = '#ff4d4d';
+      }
+    }
+
+    // Initial load
+    loadNumbers();
+  </script>
+</body>
+</html>

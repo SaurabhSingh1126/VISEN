@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment | VISEN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="payment-page">
+  <div class="form-container">
+    <div id="payment-box" style="width: 100%; max-width: 420px; padding: 30px; background: rgba(17, 17, 17, 0.85); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <h2 style="margin-bottom: 5px; color: #4CAF50; letter-spacing: 2px;">Message Sent!</h2>
+      <p style="margin-bottom: 25px; font-size: 15px; color: #ccc;">Please complete your ₹800 payment to confirm your design consultation.</p>
+      
+      <a id="pay-btn" href="#" style="display:inline-block; margin-bottom: 25px; padding: 14px 28px; background: #fff; color: #000; text-decoration: none; font-weight: bold; border-radius: 6px; box-shadow: 0 4px 15px rgba(255,255,255,0.2); width: 100%; font-size: 16px; transition: 0.3s ease;">Direct Pay via GPay / UPI</a>
+      
+      <span style="color:#ddd; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Or Scan QR Code</span><br>
+      <img src="qr.jpeg" alt="Pay via QR" style="border-radius: 12px; max-width: 240px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); margin-top: 10px; border: 2px solid rgba(255,255,255,0.1);"/>
+      
+      <button onclick="showThankYou()" style="margin-top: 25px; margin-bottom: 5px; background: transparent; border: 1px solid #4CAF50; color: #4CAF50; padding: 12px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s ease; width: 100%; font-size: 14px; font-weight: 600;" onmouseover="this.style.background='#4CAF50'; this.style.color='#000';" onmouseout="this.style.background='transparent'; this.style.color='#4CAF50';">I've Completed the Payment</button>
+
+      <a href="index.html" style="margin-top: 25px; color: #aaa; text-decoration: none; font-size: 14px; transition: 0.3s ease;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&larr; Return to Home</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="env.js"></script>
+  <script>
+    emailjs.init(window.EMAILJS_PUBLIC_KEY || '');
+
+    const upiId = window.UPI_ID || "your_upi_id@bank";
+    const upiLink = `upi://pay?pa=${upiId}&pn=VISEN&tn=Consultation&am=800.00&cu=INR`;
+    document.getElementById('pay-btn').href = upiLink;
+
+    function showThankYou() {
+      const box = document.getElementById('payment-box');
+      box.innerHTML = `
+        <div style="font-size: 60px; margin-bottom: 10px;">✨</div>
+        <h2 style="margin-bottom: 15px; color: #4CAF50; letter-spacing: 2px;">Thank You!</h2>
+        <p style="margin-bottom: 20px; font-size: 16px; color: #fff; line-height: 1.5;">Your payment is being verified by our team.</p>
+        <p style="margin-bottom: 30px; font-size: 14px; color: #aaa; line-height: 1.5;">We will successfully match your transaction with your message and reach out to you shortly to begin the consultation process.</p>
+        <a href="index.html" style="display:inline-block; padding: 12px 28px; background: #fff; color: #000; text-decoration: none; font-weight: bold; border-radius: 6px; transition: 0.3s ease;">Return to Homepage</a>
+      `;
+
+      // Book the number in the backend now that payment is "completed"
+      const selectedNumber = localStorage.getItem('visen_selected_number');
+      if (selectedNumber !== null && selectedNumber !== "") {
+        fetch('/api/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: parseInt(selectedNumber, 10) })
+        }).then(res => res.json())
+          .then(data => {
+            console.log('Number booked:', data);
+            localStorage.removeItem('visen_selected_number');
+          }).catch(err => console.error('Error booking number:', err));
+      }
+
+      // Dispatch Auto-Reply to the Customer
+      const userEmail = localStorage.getItem('visen_user_email');
+      const userName = localStorage.getItem('visen_user_name');
+
+      if (userEmail && window.EMAILJS_PUBLIC_KEY) {
+        const thxMessage = "Thank You! Your payment is being verified by our team. We will successfully match your transaction with your message and reach out to you shortly to begin the consultation process.";
+        
+        const params = {
+          user_name: "VISEN Team",
+          from_name: "VISEN Team",
+          name: "VISEN Team",
+          sender_name: "VISEN Team",
+          
+          user_email: window.EMAILJS_TO_EMAIL || "support@visen.in",
+          from_email: window.EMAILJS_TO_EMAIL || "support@visen.in",
+          
+          message: "Hi " + (userName || "Valued Client") + ",\n\n" + thxMessage,
+          user_message: thxMessage,
+          comments: thxMessage,
+          
+          to_email: userEmail,
+          to: userEmail,
+          recipient: userEmail,
+          send_to: userEmail,
+          recipient_email: userEmail,
+          reply_to: window.EMAILJS_TO_EMAIL || "support@visen.in"
+        };
+
+        emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_TEMPLATE_ID, params).then(
+          () => {
+            console.log("Thank you email successfully dispatched to", userEmail);
+            localStorage.removeItem('visen_user_email'); // Clean up
+            localStorage.removeItem('visen_user_name');
+          },
+          (err) => console.error('Failed to send auto-reply:', err)
+        );
+      }
+    }
+  </script>
+</body>
+</html>

@@ -4,30 +4,284 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact | VISEN</title>
-  <meta name="description" content="Get in touch with VISEN for premium design services. We are here to help you define your style.">
+  <meta name="description" content="Get in touch with VISEN for premium design services.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    body.contact-page {
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* ===== PAGE WRAPPER ===== */
+    .page-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 50px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* ===== CALENDAR SECTION ===== */
+    .cal-box {
+      background: rgba(15, 15, 15, 0.88);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .cal-box h2 {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    /* 7-column calendar grid */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 7px;
+    }
+
+    /* Each number cell */
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
+    }
+
+    .cal-cell:empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
+
+    /* Available — hover */
+    .cal-cell.available:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+      transform: scale(1.08);
+    }
+
+    /* Selected */
+    .cal-cell.selected {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+      font-weight: 700;
+      transform: scale(1.08);
+      box-shadow: 0 0 18px rgba(255,255,255,0.35);
+    }
+
+    /* Out of Stock — greyed, strikethrough feel */
+    .cal-cell.soldout {
+      background: rgba(255, 60, 60, 0.1);
+      border-color: rgba(255, 60, 60, 0.3);
+      color: rgba(255, 80, 80, 0.5);
+      cursor: not-allowed;
+      font-size: 10px;
+      flex-direction: column;
+      gap: 1px;
+      text-align: center;
+      line-height: 1.1;
+      pointer-events: none;
+    }
+
+    .cal-cell.soldout .num-label {
+      font-size: 13px;
+      text-decoration: line-through;
+      color: rgba(255,80,80,0.45);
+    }
+
+    .cal-cell.soldout .oos-label {
+      font-size: 7px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: rgba(255,80,80,0.45);
+    }
+
+    /* Selected number badge */
+    .cal-selected-info {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      color: #aaa;
+      min-height: 22px;
+    }
+    .cal-selected-info .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 4px 16px;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    #cal-error {
+      text-align: center;
+      color: #ff4d4d;
+      font-size: 13px;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    /* ===== FORM SECTION ===== */
+    .form-box {
+      background: rgba(15, 15, 15, 0.88);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      font-size: 18px;
+    }
+
+    .form-box input, .form-box textarea {
+      margin: 7px 0;
+      padding: 12px;
+      border: none;
+      outline: none;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .form-box input::placeholder, .form-box textarea::placeholder {
+      color: #777;
+    }
+
+    .form-box textarea {
+      resize: none;
+      height: 100px;
+    }
+
+    .form-box button {
+      margin-top: 14px;
+      padding: 14px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 8px;
+      transition: 0.25s;
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .form-box button:hover {
+      background: #ddd;
+    }
+
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .direct-contact {
+      margin-top: 22px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .direct-contact a {
+      color: #ccc;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .direct-contact a:hover { color: #fff; }
+  </style>
 </head>
 <body class="contact-page">
 
-  <div class="form-container">
-    <form id="contact-form">
-      <h2>Contact Us</h2>
+  <div class="page-wrap">
 
-      <input type="text" name="user_name" placeholder="Your Name" required>
-      <input type="email" name="user_email" placeholder="Your Email" required>
-      <textarea name="message" placeholder="Your Message" required></textarea>
+    <!-- ===== SECTION 1: CALENDAR NUMBER PICKER ===== -->
+    <div class="cal-box">
+      <h2>Choose Your Number</h2>
 
-      <button type="submit">Send Message</button>
-      <p id="status"></p>
-    </form>
+      <div class="cal-grid" id="cal-grid">
+        <!-- Numbers 1-31 populated by JS -->
+      </div>
+
+      <div class="cal-selected-info" id="cal-selected-info">Tap a number to select it</div>
+      <div id="cal-error"></div>
+    </div>
+
+    <!-- ===== SECTION 2: CONTACT FORM ===== -->
+    <div class="form-box">
+      <form id="contact-form">
+        <h2>Your Details</h2>
+
+        <input type="text" name="user_name" placeholder="Your Name" required>
+        <input type="email" name="user_email" placeholder="Your @gmail.com Email"
+          pattern="^[a-zA-Z0-9._%\+\-]+@gmail\.com$"
+          title="Please use a Google verified @gmail.com address" required>
+        <input type="tel" name="user_phone" placeholder="Your Phone Number"
+          pattern="[0-9]{10}" maxlength="10"
+          oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          title="Please enter a valid 10-digit phone number" required>
+        <input type="text" name="instagram" placeholder="Your Instagram Handle (e.g. @username)">
+        <textarea name="message" placeholder="Your Message" required></textarea>
+
+        <!-- Set by calendar click -->
+        <input type="hidden" name="selected_number" id="hidden_selected_number">
+
+        <button type="submit">Pay ₹800</button>
+        <p id="status"></p>
+
+        <div class="direct-contact">
+          <p>Instagram: <a href="https://instagram.com/visen_design" target="_blank">@visen_design</a></p>
+          <p>Call: <a href="tel:+910000000000">+91 00000 00000</a></p>
+        </div>
+      </form>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="env.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
