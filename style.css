@@ -16,14 +16,14 @@ body {
 
 /* Mobile first (default) */
 body.home {
-  background: url("ngp.png") no-repeat center 55%/cover;
+  background: url("ngp.png") no-repeat center center/cover;
   min-height: 100vh;
 }
 
 /* Desktop */
 @media (min-width: 1024px) {
   body.home {
-    background: url("ngp.png") no-repeat center 55%/cover;
+    background: url("ngp.png") no-repeat center center/cover;
   }
 }
 
